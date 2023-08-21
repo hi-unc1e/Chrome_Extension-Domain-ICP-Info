@@ -8,11 +8,7 @@ chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
     fetchWithRetry(apiURL, 3)
       .then(response => response.json())
       .then(data => {
-        var table = createTableFromJSON(data);
-        document.body.appendChild(table);
-        document.getElementById('content').appendChild(table);
-        // document.getElementById('content').textContent = table;
-        // document.getElementById('content').textContent = JSON.stringify(data, null, 2);
+        document.getElementById('content').innerHTML = craftHTML(data);
       })
       .catch(error => {
         document.getElementById('content').textContent = 'Error: ' + error.message;
@@ -20,6 +16,20 @@ chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
   });
   
 
+  function craftHTML(data) {
+    var output = '<center><table>';
+
+    output += '<tr><td><b>Domain</b></td><td>' + data.domain + '</td></tr>';
+    output += '<tr><td><b>Name</b></td><td>' + data.info.name + '</td></tr>';
+    output += '<tr><td><b>Nature</b></td><td>' + data.info.nature + '</td></tr>';
+    output += '<tr><td><b>ICP</b></td><td>' + data.info.icp + '</td></tr>';
+    output += '<tr><td><b>Title</b></td><td>' + data.info.title + '</td></tr>';
+    output += '<tr><td><b>Time</b></td><td>' + data.info.time + '</td></tr>';
+
+    output += '</table></center>';
+
+    return output;
+}
 
 function createTableFromJSON(jsonData) {
   var info = jsonData.info;
