@@ -3,9 +3,10 @@
     "name": "Domain ICP Info",
     "version": "1.0",
     "description": "Get the ICP info of a domain.",
-    "browser_action": {
+    "permissions": ["activeTab"],
+    "host_permissions": [ "http://*/*", "https://*/*"],
+    "action": {
       "default_icon": "icon.png",
       "default_popup": "popup.html"
-    },
-    "permissions": ["activeTab", "https://api.vvhan.com/*"]
+    }
   }
