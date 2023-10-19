@@ -1,8 +1,9 @@
 {
     "manifest_version": 3,
     "name": "Domain ICP Info",
-    "version": "1.0",
-    "description": "Get the ICP info of a domain.",
+    "short_name": "ICP",
+    "version": "1.2.0",
+    "description": "Get the ICP info of a domain, ICP备案信息查询插件",
     "permissions": ["activeTab"],
     "host_permissions": [ "http://*/*", "https://*/*"],
     "action": {

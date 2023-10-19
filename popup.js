@@ -1,12 +1,12 @@
 chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
     var url = new URL(tabs[0].url);
     var hostname = url.hostname;
-    var domain = extractMainDomain(hostname);  // You need to implement this function.
-    
-    var apiURL = "https://api.vvhan.com/api/icp?url=" + domain;
-  
-    fetchWithRetry(apiURL, 3)
-      .then(response => response.json())
+    // var domain = extractMainDomain(hostname);  // You need to implement this function.
+    // /Users/dpdu/Desktop/bin/Chrome_ext/Domain ICP Info/popup.js
+    var icp_URL = "https://icp.chinaz.com/" + hostname;
+    console.log("【ICP】" + icp_URL);
+    fetchWithRetry(icp_URL, 3)
+      .then(response => response.text())
       .then(data => {
         document.getElementById('content').innerHTML = craftHTML(data);
       })
@@ -16,15 +16,46 @@ chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
   });
   
 
-  function craftHTML(data) {
+  function extractValueFromHTML(html, selector) {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, "text/html");
+    const elements = doc.querySelectorAll(selector);
+  
+    const values = Array.from(elements).map(element => element.textContent);
+    console.log("Try find `" + selector + "` -> " + values);
+    
+    return values;
+  }
+  
+
+  function getDataFromHTML(html) {
+    data = {};
+
+    data.domain = extractValueFromHTML(html, "#first > li:nth-child(6) > p");
+    // 主办单位名称
+    data.company_name = extractValueFromHTML(html, "#companyName"); 
+    // 网站名称
+    data.site_name = extractValueFromHTML(html, "#first > li:nth-child(4) > p");  
+    data.nature = extractValueFromHTML(html, "#first > li:nth-child(2) > p > strong");
+    data.icp = extractValueFromHTML(html, "#permit");
+    if (data.icp == null || data.icp == "")  {
+      var icp_URL =  "https://icp.chinaz.com/" + data.domain;
+      data.icp = `暂无法显示，<a href='${icp_URL}' target='_blank'>点此查看</a>`;
+    }
+    data.time = extractValueFromHTML(html, "#first > li:nth-child(8) > p");
+    return data;
+  }
+
+  function craftHTML(html) {
+    data = getDataFromHTML(html);
     var output = '<center><table>';
 
-    output += '<tr><td><b>Domain</b></td><td>' + data.domain + '</td></tr>';
-    output += '<tr><td><b>Name</b></td><td>' + data.info.name + '</td></tr>';
-    output += '<tr><td><b>Nature</b></td><td>' + data.info.nature + '</td></tr>';
-    output += '<tr><td><b>ICP</b></td><td>' + data.info.icp + '</td></tr>';
-    output += '<tr><td><b>Title</b></td><td>' + data.info.title + '</td></tr>';
-    output += '<tr><td><b>Time</b></td><td>' + data.info.time + '</td></tr>';
+    output += '<tr><td><b>域名\t</b></td><td>' + data.domain + '</td></tr>';
+    output += '<tr><td><b>网站名\t</b></td><td>' + data.site_name + '</td></tr>';
+    output += '<tr><td><b>性质\t</b></td><td>' + data.nature + '</td></tr>';
+    output += '<tr><td><b>单位名称\t</b></td><td>' + data.company_name + '</td></tr>';
+    output += '<tr><td><b>审核时间\t</b></td><td>' + data.time + '</td></tr>';
+    output += '<tr><td><b>ICP\t</b></td><td>' + data.icp + '</td></tr>';
 
     output += '</table></center>';
 
