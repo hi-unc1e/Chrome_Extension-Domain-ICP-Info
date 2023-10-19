@@ -1,14 +1,15 @@
 # Chrome_Extension-Domain-ICP-Info
 Chrome浏览器插件_ICP备案号查询
+- v2.0：调用https://icp.chinaz.com/www.bing.com，表示感谢！
+- v1.0：调用API: `https://api.vvhan.com/api/icp?url=baidu.com`。表示感谢！【该API已失效】
 
-- 调用API: `https://api.vvhan.com/api/icp?url=baidu.com`。表示感谢！
-![image](https://github.com/hi-unc1e/Chrome_Extension-Domain-ICP-Info/assets/67778054/5a343f9a-d52c-4311-87e4-c8ca54d1eaf7)
-
+## 使用
+![image](https://github.com/hi-unc1e/Chrome_Extension-Domain-ICP-Info/assets/67778054/5b7b7279-0021-4728-a88a-c87f92fd33f5)
 
 
 ![image](https://github.com/hi-unc1e/Chrome_Extension-Domain-ICP-Info/assets/67778054/2237f5b8-64b1-4f60-bc21-d1c87d0f8fee)
 
-## 使用方法
+## 安装
 在release中，下载最新版本的zip包，解压后，“加载解压缩的扩展”，选中该文件夹
 ![image](https://github.com/hi-unc1e/Chrome_Extension-Domain-ICP-Info/assets/67778054/714b2be3-d535-4987-b81e-c78ba735b44d)
 
