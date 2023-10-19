@@ -38,6 +38,10 @@ chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
     data.site_name = extractValueFromHTML(html, "#first > li:nth-child(4) > p");  
     data.nature = extractValueFromHTML(html, "#first > li:nth-child(2) > p > strong");
     data.icp = extractValueFromHTML(html, "#permit");
+    if (data.icp == null || data.icp == "")  {
+      var icp_URL =  "https://icp.chinaz.com/" + data.domain;
+      data.icp = `暂无法显示。可<a href='${icp_URL}'>点此查看</a>`;
+    }
     data.time = extractValueFromHTML(html, "#first > li:nth-child(8) > p");
     return data;
   }
@@ -48,10 +52,10 @@ chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
 
     output += '<tr><td><b>域名\t</b></td><td>' + data.domain + '</td></tr>';
     output += '<tr><td><b>网站名\t</b></td><td>' + data.site_name + '</td></tr>';
-    output += '<tr><td><b>ICP\t</b></td><td>' + data.icp + '</td></tr>';
     output += '<tr><td><b>性质\t</b></td><td>' + data.nature + '</td></tr>';
     output += '<tr><td><b>单位名称\t</b></td><td>' + data.company_name + '</td></tr>';
     output += '<tr><td><b>审核时间\t</b></td><td>' + data.time + '</td></tr>';
+    output += '<tr><td><b>ICP\t</b></td><td>' + data.icp + '</td></tr>';
 
     output += '</table></center>';
 
