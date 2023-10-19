@@ -40,7 +40,7 @@ chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
     data.icp = extractValueFromHTML(html, "#permit");
     if (data.icp == null || data.icp == "")  {
       var icp_URL =  "https://icp.chinaz.com/" + data.domain;
-      data.icp = `暂无法显示，<a href='${icp_URL}'>点此查看</a>`;
+      data.icp = `暂无法显示，<a href='${icp_URL}' target='_blank'>点此查看</a>`;
     }
     data.time = extractValueFromHTML(html, "#first > li:nth-child(8) > p");
     return data;
