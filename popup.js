@@ -46,12 +46,12 @@ chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
     data = getDataFromHTML(html);
     var output = '<center><table>';
 
-    output += '<tr><td><b>域名</b></td><td>' + data.domain + '</td></tr>';
-    output += '<tr><td><b>性质</b></td><td>' + data.nature + '</td></tr>';
-    output += '<tr><td><b>ICP号</b></td><td>' + data.icp + '</td></tr>';
-    output += '<tr><td><b>网站名称</b></td><td>' + data.site_name + '</td></tr>';
-    output += '<tr><td><b>单位名称</b></td><td>' + data.company_name + '</td></tr>';
-    output += '<tr><td><b>审核时间</b></td><td>' + data.time + '</td></tr>';
+    output += '<tr><td><b>域名\t</b></td><td>' + data.domain + '</td></tr>';
+    output += '<tr><td><b>网站名\t</b></td><td>' + data.site_name + '</td></tr>';
+    output += '<tr><td><b>ICP\t</b></td><td>' + data.icp + '</td></tr>';
+    output += '<tr><td><b>性质\t</b></td><td>' + data.nature + '</td></tr>';
+    output += '<tr><td><b>单位名称\t</b></td><td>' + data.company_name + '</td></tr>';
+    output += '<tr><td><b>审核时间\t</b></td><td>' + data.time + '</td></tr>';
 
     output += '</table></center>';
 
