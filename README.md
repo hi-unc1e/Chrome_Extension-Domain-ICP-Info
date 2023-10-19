@@ -7,7 +7,6 @@ Chrome浏览器插件_ICP备案号查询
 ![image](https://github.com/hi-unc1e/Chrome_Extension-Domain-ICP-Info/assets/67778054/5b7b7279-0021-4728-a88a-c87f92fd33f5)
 
 
-![image](https://github.com/hi-unc1e/Chrome_Extension-Domain-ICP-Info/assets/67778054/2237f5b8-64b1-4f60-bc21-d1c87d0f8fee)
 
 ## 安装
 在release中，下载最新版本的zip包，解压后，“加载解压缩的扩展”，选中该文件夹
