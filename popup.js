@@ -5,7 +5,7 @@ const API_CONFIG = {
         buildUrl: (hostname) => `https://api.leafone.cn/api/icp?name=${hostname}`,
         parseResponse: (jsonData) => {
             if (jsonData.code !== 200 || !jsonData.data || !jsonData.data.list || jsonData.data.list.length === 0) {
-                return getEmptyData();
+                return null; // 返回null表示解析失败，触发备用API
             }
             const info = jsonData.data.list[0];
             return {
@@ -17,12 +17,28 @@ const API_CONFIG = {
                 time: info.updateRecordTime || "未知"
             };
         },
-        cacheExpiration: 24 * 60 * 60 * 1000, // 24小时
+        cacheExpiration: 24 * 60 * 60 * 1000,
+        retryCount: 3
+    },
+    icp_apihz: {
+        baseUrl: "https://cn.apihz.cn/api/wangzhan/icp.php",
+        buildUrl: (hostname) => `https://cn.apihz.cn/api/wangzhan/icp.php?id=88888888&key=88888888&domain=${hostname}`,
+        parseResponse: (jsonData) => {
+            if (jsonData.code !== 200) {
+                return null;
+            }
+            return {
+                domain: jsonData.domain || "未知",
+                company_name: jsonData.unit || "未知",
+                site_name: jsonData.domain || "未知",
+                nature: "未知", // 该API无此字段
+                icp: jsonData.icp || "未知",
+                time: jsonData.time || "未知"
+            };
+        },
+        cacheExpiration: 24 * 60 * 60 * 1000,
         retryCount: 3
     }
-    // 可以添加更多API配置
-    // whois: { ... },
-    // dns: { ... }
 };
 
 // 缓存管理类
@@ -76,35 +92,57 @@ class APIClient {
 
 // 数据查询类
 class DataFetcher {
-    constructor(apiType) {
-        this.config = API_CONFIG[apiType];
-        if (!this.config) {
-            throw new Error(`未知的API类型: ${apiType}`);
+    constructor(primaryApiType, fallbackApiType = null) {
+        this.primaryConfig = API_CONFIG[primaryApiType];
+        this.fallbackConfig = fallbackApiType ? API_CONFIG[fallbackApiType] : null;
+        
+        if (!this.primaryConfig) {
+            throw new Error(`未知的主API类型: ${primaryApiType}`);
         }
     }
 
     async getData(hostname) {
         try {
             // 尝试从缓存获取
-            const cachedData = await CacheManager.get(hostname, this.config.cacheExpiration);
+            const cachedData = await CacheManager.get(hostname, this.primaryConfig.cacheExpiration);
             if (cachedData) {
                 return cachedData;
             }
 
-            // 发起API请求
-            const url = this.config.buildUrl(hostname);
-            console.log(`【API查询】${url}`);
+            // 尝试主API
+            let data = await this.tryFetchAPI(hostname, this.primaryConfig);
             
-            const response = await APIClient.fetch(url, this.config.retryCount);
-            const processedData = this.config.parseResponse(response);
-            
+            // 如果主API失败且存在备用API，尝试备用API
+            if (!data && this.fallbackConfig) {
+                console.log('主API失败，尝试备用API');
+                data = await this.tryFetchAPI(hostname, this.fallbackConfig);
+            }
+
+            // 如果所有API都失败，返回空数据
+            if (!data) {
+                return getEmptyData();
+            }
+
             // 保存到缓存
-            await CacheManager.set(hostname, processedData);
-            
-            return processedData;
+            await CacheManager.set(hostname, data);
+            return data;
+
         } catch (error) {
             console.error('查询失败:', error);
             return getEmptyData();
+        }
+    }
+
+    async tryFetchAPI(hostname, config) {
+        try {
+            const url = config.buildUrl(hostname);
+            console.log(`【API查询】${url}`);
+            
+            const response = await APIClient.fetch(url, config.retryCount);
+            return config.parseResponse(response);
+        } catch (error) {
+            console.error(`API请求失败:`, error);
+            return null;
         }
     }
 }
@@ -152,14 +190,14 @@ chrome.tabs.query({active: true, currentWindow: true}, async function(tabs) {
     const hostname = extractMainDomain(url.hostname);
     
     try {
-      // 指定API类型
-        const fetcher = new DataFetcher('icp_leafone');
+        // 创建DataFetcher实例时指定主API和备用API
+        const fetcher = new DataFetcher('icp_leafone', 'icp_apihz');
         const data = await fetcher.getData(hostname);
         document.getElementById('content').innerHTML = UIRenderer.renderResult(data);
     } catch (error) {
         document.getElementById('content').innerHTML = UIRenderer.renderError(
             error, 
-            API_CONFIG.icp.buildUrl(hostname)
+            API_CONFIG.icp_leafone.buildUrl(hostname)
         );
     }
 });
