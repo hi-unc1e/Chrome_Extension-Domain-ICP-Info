@@ -2,7 +2,7 @@
     "manifest_version": 3,
     "name": "Domain ICP Info",
     "short_name": "ICP",
-    "version": "1.2.2",
+    "version": "1.2.3",
     "description": "Get the ICP info of a domain, ICP备案信息查询插件",
     "permissions": [
       "activeTab",
