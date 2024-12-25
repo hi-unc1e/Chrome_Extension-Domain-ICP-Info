@@ -1,126 +1,86 @@
+// 获取当前标签页信息并发起API请求
 chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-    var url = new URL(tabs[0].url);
-    var hostname = url.hostname;
-    // var domain = extractMainDomain(hostname);  // You need to implement this function.
-    // /Users/dpdu/Desktop/bin/Chrome_ext/Domain ICP Info/popup.js
-    var icp_URL = "https://icp.chinaz.com/" + hostname;
-    console.log("【ICP】" + icp_URL);
+    const url = new URL(tabs[0].url);
+    const hostname = extractMainDomain(url.hostname);
+    const icp_URL = "https://api.leafone.cn/api/icp?name=" + hostname;
+    
+    console.log("【ICP查询】" + icp_URL);
+    
     fetchWithRetry(icp_URL, 3)
-      .then(response => response.text())
+      .then(response => response.json())  // 改为解析JSON
       .then(data => {
-        document.getElementById('content').innerHTML = craftHTML(data);
+        const processedData = getDataFromJSON(data);
+        document.getElementById('content').innerHTML = craftHTML(processedData);
       })
       .catch(error => {
-        document.getElementById('content').textContent = 'Error: ' + error.message;
+        document.getElementById('content').innerHTML = `
+          <div style="color: red; text-align: center;">
+            查询失败: ${error.message}<br>
+            <a href="${icp_URL}" target="_blank">点击直接访问API</a>
+          </div>`;
       });
-  });
-  
+});
 
-  function extractValueFromHTML(html, selector) {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, "text/html");
-    const elements = doc.querySelectorAll(selector);
-  
-    const values = Array.from(elements).map(element => element.textContent);
-    console.log("Try find `" + selector + "` -> " + values);
-    
-    return values;
-  }
-  
-
-  function getDataFromHTML(html) {
-    data = {};
-
-    data.domain = extractValueFromHTML(html, "#first > li:nth-child(6) > p");
-    // 主办单位名称
-    data.company_name = extractValueFromHTML(html, "#companyName"); 
-    // 网站名称
-    data.site_name = extractValueFromHTML(html, "#first > li:nth-child(4) > p");  
-    data.nature = extractValueFromHTML(html, "#first > li:nth-child(2) > p > strong");
-    data.icp = extractValueFromHTML(html, "#permit");
-    if (data.icp == null || data.icp == "")  {
-      var icp_URL =  "https://icp.chinaz.com/" + data.domain;
-      data.icp = `暂无法显示，<a href='${icp_URL}' target='_blank'>点此查看</a>`;
+// 解析API返回的JSON数据
+function getDataFromJSON(jsonData) {
+    // 检查API返回状态
+    if (jsonData.code !== 200 || !jsonData.data || !jsonData.data.list || jsonData.data.list.length === 0) {
+        return {
+            domain: "未查询到",
+            company_name: "未查询到",
+            site_name: "未查询到",
+            nature: "未查询到",
+            icp: "未查询到",
+            time: "未查询到"
+        };
     }
-    data.time = extractValueFromHTML(html, "#first > li:nth-child(8) > p");
-    return data;
-  }
 
-  function craftHTML(html) {
-    data = getDataFromHTML(html);
-    var output = '<center><table>';
-
-    output += '<tr><td><b>域名\t</b></td><td>' + data.domain + '</td></tr>';
-    output += '<tr><td><b>网站名\t</b></td><td>' + data.site_name + '</td></tr>';
-    output += '<tr><td><b>性质\t</b></td><td>' + data.nature + '</td></tr>';
-    output += '<tr><td><b>单位名称\t</b></td><td>' + data.company_name + '</td></tr>';
-    output += '<tr><td><b>审核时间\t</b></td><td>' + data.time + '</td></tr>';
-    output += '<tr><td><b>ICP\t</b></td><td>' + data.icp + '</td></tr>';
-
-    output += '</table></center>';
-
-    return output;
+    const info = jsonData.data.list[0];
+    return {
+        domain: info.domain || "未知",
+        company_name: info.unitName || "未知",
+        site_name: info.domain || "未知", // API中没有单独的网站名称，使用域名代替
+        nature: info.natureName || "未知",
+        icp: info.serviceLicence || "未知",
+        time: info.updateRecordTime || "未知"
+    };
 }
 
-function createTableFromJSON(jsonData) {
-  var info = jsonData.info;
-
-  var table = document.createElement('table');
-  table.style.width = '100%';
-  table.setAttribute('border', '1');
-
-  var thead = document.createElement('thead');
-  var tbody = document.createElement('tbody');
-
-  var headers = ['Name', 'Nature', 'ICP', 'Title', 'Time'];
-  var dataFields = ['name', 'nature', 'icp', 'title', 'time'];
-
-  var headerRow = document.createElement('tr');
-  headers.forEach(headerText => {
-      var header = document.createElement('th');
-      header.textContent = headerText;
-      headerRow.appendChild(header);
-  });
-  thead.appendChild(headerRow);
-
-  var dataRow = document.createElement('tr');
-  dataFields.forEach(field => {
-      var cell = document.createElement('td');
-      cell.textContent = info[field];
-      dataRow.appendChild(cell);
-  });
-  tbody.appendChild(dataRow);
-
-  table.appendChild(thead);
-  table.appendChild(tbody);
-
-  return table;
+// 生成HTML展示内容
+function craftHTML(data) {
+    return `
+        <center>
+            <table>
+                <tr><td><b>域名</b></td><td>${data.domain}</td></tr>
+                <tr><td><b>网站名</b></td><td>${data.site_name}</td></tr>
+                <tr><td><b>性质</b></td><td>${data.nature}</td></tr>
+                <tr><td><b>单位名称</b></td><td>${data.company_name}</td></tr>
+                <tr><td><b>审核时间</b></td><td>${data.time}</td></tr>
+                <tr><td><b>ICP</b></td><td>${data.icp}</td></tr>
+            </table>
+        </center>`;
 }
 
-
-
-  function fetchWithRetry(url, retries) {
+// 重试机制
+function fetchWithRetry(url, retries) {
     return fetch(url).catch(function(error) {
-      if (retries > 1) {
-        return fetchWithRetry(url, retries - 1);
-      } else {
+        if (retries > 1) {
+            return fetchWithRetry(url, retries - 1);
+        }
         throw error;
-      }
     });
-  }
-  
-  // You need to implement this function to extract the main domain from a hostname.
-  function extractMainDomain(hostname) {
-    // Check if hostname is an IP address
-    var ipPattern = /^(\d{1,3}\.){3}\d{1,3}$/;
+}
+
+// 提取主域名
+function extractMainDomain(hostname) {
+    const ipPattern = /^(\d{1,3}\.){3}\d{1,3}$/;
     if (ipPattern.test(hostname)) {
-      return false;
+        return hostname;
     }
 
-    var parts = hostname.split('.');
+    const parts = hostname.split('.');
     if (parts.length > 2) {
-      return parts.slice(-2).join('.');
-    } else {
-      return hostname;
+        return parts.slice(-2).join('.');
     }
+    return hostname;
 }
